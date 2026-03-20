@@ -1,27 +1,3 @@
--- ID DA IMAGEM (MISIDE)
-local IMAGE_ID = "rbxassetid://86608309240586"
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
-local UserInputService = game:GetService("UserInputService")
-local Stats = game:GetService("Stats") -- Adicionado para o Ping
-local Lighting = game:GetService("Lighting") -- Adicionado para Otimização
-local Camera = workspace.CurrentCamera
-local LocalPlayer = Players.LocalPlayer
-
--- CONFIGURAÇÕES GERAIS (VALORES PADRÃO)
-local AIMBOT_ENABLED = false
-local FOV_RADIUS = 120 
-local SMOOTHNESS = 0.2 
-local AIM_PART = "Head"
-local VISIBLE_CHECK = false
-local ESP_ENABLED = false
-local MAX_ESP_DISTANCE = 50
-local BOX_COLOR = Color3.fromRGB(0, 255, 140)
-local SHOW_FOV_VISUAL = false
-local STICKY_AIM = false
-local SHOW_STATS = true -- Nova opção
 
 -- VARIÁVEIS DE CONTROLE
 local isAimingToggle = false
