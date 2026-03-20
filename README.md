@@ -1,11 +1,3 @@
-local MainStroke = Instance.new("UIStroke", MainFrame); MainStroke.Thickness = 3
-
--- HEADER
-local Header = Instance.new("Frame", MainFrame); Header.Size = UDim2.new(1, 0, 0, 35); Header.BackgroundTransparency = 0.5; Header.BackgroundColor3 = Color3.new(0,0,0); Header.ZIndex = 2
-local Title = Instance.new("TextLabel", Header); Title.Size = UDim2.new(0.5, 0, 1, 0); Title.Position = UDim2.new(0, 10, 0, 0); Title.Text = "GuN HUB V1"; Title.Font = Enum.Font.GothamBold; Title.TextSize = 18; Title.BackgroundTransparency = 1; Title.TextXAlignment = Enum.TextXAlignment.Left
-
--- LABEL DE FPS/PING (Nova Opção Visual)
-local StatsLabel = Instance.new("TextLabel", Header); StatsLabel.Size = UDim2.new(0.5, 0, 1, 0); StatsLabel.Position = UDim2.new(0.45, 0, 0, 0); StatsLabel.Text = "FPS: 0 | PING: 0ms"; StatsLabel.Font = Enum.Font.GothamMedium; StatsLabel.TextSize = 12; StatsLabel.TextColor3 = Color3.new(1,1,1); StatsLabel.BackgroundTransparency = 1; StatsLabel.TextXAlignment = Enum.TextXAlignment.Right
 
 -- NAVEGAÇÃO
 local TabFrame = Instance.new("Frame", MainFrame); TabFrame.Size = UDim2.new(0, 80, 1, -35); TabFrame.Position = UDim2.new(0, 0, 0, 35); TabFrame.BackgroundTransparency = 0.7; TabFrame.BackgroundColor3 = Color3.new(0,0,0); TabFrame.ZIndex = 2
