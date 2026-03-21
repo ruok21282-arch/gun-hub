@@ -1,4 +1,3 @@
-este script não está mais funcionando,This script is no longer working.
 
 -- ID DA IMAGEM (MISIDE)
 local IMAGE_ID = "rbxassetid://86608309240586"
