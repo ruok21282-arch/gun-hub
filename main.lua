@@ -1,3 +1,5 @@
+este script não está mais funcionando,This script is no longer working.
+
 -- ID DA IMAGEM (MISIDE)
 local IMAGE_ID = "rbxassetid://86608309240586"
 
@@ -32,7 +34,7 @@ local function IsVisible(TargetPart)
     local char = LocalPlayer.Character
     if not char then return false end
     local RayParams = RaycastParams.new()
-    RayParams.FilterType = Enum.RaycastFilterType.Blacklist
+    RayParams.FilterType = Enum.RaycastFilterType.Exclude -- Atualizado para método moderno (Performance)
     RayParams.FilterDescendantsInstances = {char, TargetPart.Parent, Camera}
     local Direction = (TargetPart.Position - Camera.CFrame.Position).Unit * (TargetPart.Position - Camera.CFrame.Position).Magnitude
     local RayResult = workspace:Raycast(Camera.CFrame.Position, Direction, RayParams)
@@ -78,7 +80,7 @@ MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.ClipsDescendants = true
-MainFrame.Visible = true -- APARECE AUTOMATICAMENTE AO EXECUTAR
+MainFrame.Visible = true 
 
 local MainCorner = Instance.new("UICorner", MainFrame); MainCorner.CornerRadius = UDim.new(0, 12)
 local BackgroundImg = Instance.new("ImageLabel", MainFrame); BackgroundImg.Size = UDim2.new(1, 0, 1, 0); BackgroundImg.Image = IMAGE_ID; BackgroundImg.BackgroundTransparency = 0.5; BackgroundImg.ScaleType = Enum.ScaleType.Crop; BackgroundImg.ZIndex = 0
@@ -173,7 +175,7 @@ SaveBtn.MouseButton1Click:Connect(SaveConfig)
 local LoadBtn = Instance.new("TextButton", ConfigPage); LoadBtn.Size = UDim2.new(0.95, 0, 0, 35); LoadBtn.Position = UDim2.new(0, 0, 0, 80); LoadBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40); LoadBtn.Text = "CARREGAR CONFIGURAÇÕES"; LoadBtn.TextColor3 = Color3.new(1, 1, 1); LoadBtn.Font = Enum.Font.GothamBold; Instance.new("UICorner", LoadBtn)
 LoadBtn.MouseButton1Click:Connect(LoadConfig)
 
--- --- NOVO GESTO 3 TOQUES (SEGURAR 1.5 SEGUNDOS) ---
+-- --- GESTO 3 TOQUES ---
 local currentTouches = {}
 local holdStartTime = 0
 local isHolding3 = false
@@ -182,7 +184,6 @@ UserInputService.TouchStarted:Connect(function(touch)
     currentTouches[touch] = true
     local count = 0
     for _ in pairs(currentTouches) do count = count + 1 end
-    
     if count == 3 then
         isHolding3 = true
         holdStartTime = tick()
@@ -190,7 +191,7 @@ UserInputService.TouchStarted:Connect(function(touch)
             while isHolding3 do
                 if tick() - holdStartTime >= 1.5 then
                     MainFrame.Visible = not MainFrame.Visible
-                    isHolding3 = false -- Impede que fique piscando
+                    isHolding3 = false
                     break
                 end
                 task.wait(0.1)
@@ -201,37 +202,80 @@ end)
 
 UserInputService.TouchEnded:Connect(function(touch)
     currentTouches[touch] = nil
-    isHolding3 = false -- Cancela se soltar qualquer dedo
+    isHolding3 = false
 end)
 
--- --- MOTOR DO ESP ---
-local function CreateESP(player)
-    local Box = Drawing.new("Square"); Box.Visible = false; Box.Thickness = 1; Box.Transparency = 1; Box.Filled = false
-    RunService.RenderStepped:Connect(function()
-        if ESP_ENABLED and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player ~= LocalPlayer then
-            local RootPart = player.Character.HumanoidRootPart
-            local RootPos, OnScreen = Camera:WorldToViewportPoint(RootPart.Position)
-            if OnScreen then
-                local dist = (LocalPlayer.Character.HumanoidRootPart.Position - RootPart.Position).Magnitude
-                if dist <= MAX_ESP_DISTANCE then
-                    local size = (Camera.ViewportSize.Y / dist) * 2.5
-                    Box.Size = Vector2.new(size * 0.6, size); Box.Position = Vector2.new(RootPos.X - Box.Size.X / 2, RootPos.Y - Box.Size.Y / 2); Box.Color = GetRGB(); Box.Visible = true
-                else Box.Visible = false end
-            else Box.Visible = false end
-        else Box.Visible = false end
-    end)
-end
-for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end; Players.PlayerAdded:Connect(CreateESP)
+-- --- MOTOR DO ESP (OTIMIZADO) ---
+-- Unificamos todos os desenhos em um único loop para poupar FPS
+local ESP_Table = {}
 
--- --- MOTOR DO AIMBOT ---
-local FOVCircle = Drawing.new("Circle"); FOVCircle.Thickness = 2; FOVCircle.Transparency = 0.7; FOVCircle.Filled = false
+local function RemoveESP(player)
+    if ESP_Table[player] then
+        ESP_Table[player].Box:Remove()
+        ESP_Table[player] = nil
+    end
+end
+
+local function CreateESP(player)
+    if player == LocalPlayer then return end
+    local Box = Drawing.new("Square")
+    Box.Visible = false
+    Box.Thickness = 1
+    Box.Transparency = 1
+    Box.Filled = false
+    ESP_Table[player] = {Box = Box}
+end
+
+Players.PlayerAdded:Connect(CreateESP)
+Players.PlayerRemoving:Connect(RemoveESP)
+for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end
+
+-- --- MOTOR ÚNICO (CORE) ---
+-- Colocar tudo em um só loop centralizado evita "Spam" de conexões no motor do jogo
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 2
+FOVCircle.Transparency = 0.7
+FOVCircle.Filled = false
 
 RunService.RenderStepped:Connect(function(dt)
     local rgb = GetRGB()
-    MainStroke.Color = rgb; ButtonStroke.Color = rgb; Title.TextColor3 = rgb
-    if SHOW_STATS then StatsLabel.Text = string.format("FPS: %d | PING: %dms", math.floor(1/dt), math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())) end
-    FOVCircle.Radius = FOV_RADIUS; FOVCircle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2); FOVCircle.Visible = SHOW_FOV_VISUAL; FOVCircle.Color = rgb
+    local camPos = Camera.CFrame.Position
     
+    -- UI Visuals
+    MainStroke.Color = rgb; ButtonStroke.Color = rgb; Title.TextColor3 = rgb
+    if SHOW_STATS then 
+        StatsLabel.Text = string.format("FPS: %d | PING: %dms", math.floor(1/dt), math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())) 
+    end
+    
+    -- FOV Visual
+    FOVCircle.Radius = FOV_RADIUS
+    FOVCircle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+    FOVCircle.Visible = SHOW_FOV_VISUAL
+    FOVCircle.Color = rgb
+    
+    -- Loop ESP unificado (Muito mais leve)
+    for player, data in pairs(ESP_Table) do
+        local char = player.Character
+        if ESP_ENABLED and char and char:FindFirstChild("HumanoidRootPart") then
+            local root = char.HumanoidRootPart
+            local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
+            local dist = (camPos - root.Position).Magnitude
+            
+            if onScreen and dist <= MAX_ESP_DISTANCE then
+                local size = (Camera.ViewportSize.Y / dist) * 2.5
+                data.Box.Size = Vector2.new(size * 0.6, size)
+                data.Box.Position = Vector2.new(pos.X - data.Box.Size.X / 2, pos.Y - data.Box.Size.Y / 2)
+                data.Box.Color = rgb
+                data.Box.Visible = true
+            else
+                data.Box.Visible = false
+            end
+        else
+            data.Box.Visible = false
+        end
+    end
+    
+    -- Motor Aimbot
     if AIMBOT_ENABLED and isAimingToggle then
         if STICKY_AIM and lockedTarget and lockedTarget.Character and lockedTarget.Character:FindFirstChild(AIM_PART) then
             local targetPart = lockedTarget.Character[AIM_PART]
