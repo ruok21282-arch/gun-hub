@@ -1,4 +1,3 @@
-
 -- ID DA IMAGEM (MISIDE)
 local IMAGE_ID = "rbxassetid://86608309240586"
 
