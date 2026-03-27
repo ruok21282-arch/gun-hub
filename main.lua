@@ -22,7 +22,7 @@ getgenv().speed = {
 
 local speed = getgenv().speed 
 local enginePlayer = game.Players.LocalPlayer
-local originalWalkSpeed = nil
+local originalWalkSpeed = nil -- Armazena a velocidade real do jogo
 
 local function setSpeed(player, speedValue)
     local character = player.Character or player.CharacterAdded:Wait()
@@ -37,9 +37,15 @@ local function enhanceControl(player, reset)
     local rootPart = character:FindFirstChild("HumanoidRootPart")
     if rootPart then
         if reset then
-            rootPart.CustomPhysicalProperties = nil
+            rootPart.CustomPhysicalProperties = nil -- Reseta corretamente para o default do jogo
         else
-            rootPart.CustomPhysicalProperties = PhysicalProperties.new(0.7, speed.friction, 0.5, 1.0, 0.5)
+            rootPart.CustomPhysicalProperties = PhysicalProperties.new(
+                0.7, 
+                speed.friction,
+                0.5,
+                1.0, 
+                0.5  
+            )
         end
     end
 end
@@ -49,6 +55,7 @@ local function applySpeedBoost(player)
     local humanoid = character:FindFirstChildOfClass("Humanoid")
     if not humanoid then return end
 
+    -- Salva a velocidade do jogo antes de mexer
     if originalWalkSpeed == nil then
         originalWalkSpeed = humanoid.WalkSpeed
     end
@@ -56,12 +63,13 @@ local function applySpeedBoost(player)
     if speed.enabled then
         setSpeed(player, speed.speed)
         if speed.control then
-            enhanceControl(player, false)
+            enhanceControl(player, false) 
         end
     else
+        -- Volta para a velocidade normal DO JOGO e não força o 16
         setSpeed(player, originalWalkSpeed)
         if speed.control then
-            enhanceControl(player, true)
+            enhanceControl(player, true) 
         end
     end
 end
@@ -104,10 +112,6 @@ local FLY_ENABLED = false
 local FLY_SPEED = 50
 local NOCLIP_ENABLED = false
 local INF_JUMP_ENABLED = false
-
--- NOVAS VARIÁVEIS DA ABA "AIM RISK" (apenas interface, não interferem no motor)
-local AIM_RISK_ENABLED = false
-local AIM_RISK_FORCE = false
 
 local isAimingToggle = false
 local bv, bg = nil, nil
@@ -198,21 +202,8 @@ local StatsLabel = Instance.new("TextLabel", Header); StatsLabel.Size = UDim2.ne
 local TabFrame = Instance.new("Frame", MainFrame); TabFrame.Size = UDim2.new(0, 90, 1, -35); TabFrame.Position = UDim2.new(0, 0, 0, 35); TabFrame.BackgroundTransparency = 0.9; TabFrame.BackgroundColor3 = SNOW_WHITE
 
 local Content = Instance.new("Frame", MainFrame); Content.Size = UDim2.new(1, -100, 1, -45); Content.Position = UDim2.new(0, 95, 0, 40); Content.BackgroundTransparency = 1
-
--- Páginas
-local Pages = {
-    Aim = Instance.new("Frame", Content),
-    AimRisk = Instance.new("Frame", Content),
-    ESP = Instance.new("Frame", Content),
-    Safe = Instance.new("Frame", Content),
-    Risk = Instance.new("Frame", Content),
-    Config = Instance.new("Frame", Content)
-}
-for _, p in pairs(Pages) do
-    p.Size = UDim2.new(1, 0, 1, 0)
-    p.BackgroundTransparency = 1
-    p.Visible = false
-end
+local Pages = { Aim = Instance.new("Frame", Content), ESP = Instance.new("Frame", Content), Safe = Instance.new("Frame", Content), Risk = Instance.new("Frame", Content), Config = Instance.new("Frame", Content) }
+for _, p in pairs(Pages) do p.Size = UDim2.new(1, 0, 1, 0); p.BackgroundTransparency = 1; p.Visible = false end
 Pages.Aim.Visible = true
 
 local UI_Elements = {}
@@ -234,51 +225,43 @@ local function CreateToggle(id, text, pos, parent, callback)
     end)
 end
 
--- Aba AIMBOT (original)
+-- PREENCHIMENTO ABAS
 AddInput("FOV", "RAIO DO FOV:", 0, FOV_RADIUS, Pages.Aim, function(v) FOV_RADIUS = v end)
 AddInput("SMOOTH", "SUAVIDADE:", 45, SMOOTHNESS, Pages.Aim, function(v) SMOOTHNESS = v end)
 CreateToggle("AIMON", "ATIVAR AIMBOT", 95, Pages.Aim, function(v) AIMBOT_ENABLED = v end)
 CreateToggle("VISCHECK", "VISIBLE CHECK", 130, Pages.Aim, function(v) VISIBLE_CHECK = v end)
 CreateToggle("SHOWFOV", "EXIBIR FOV VISUAL", 165, Pages.Aim, function(v) SHOW_FOV_VISUAL = v end)
 
--- Nova aba AIM RISK (adicionada com sucesso)
-CreateToggle("AIMRISK_EN", "ATIVAR AIM RISK", 0, Pages.AimRisk, function(v) AIM_RISK_ENABLED = v end)
-CreateToggle("AIMRISK_FORCE", "FORÇAR AIM (TESTE)", 40, Pages.AimRisk, function(v) AIM_RISK_FORCE = v end)
-
--- Aba ESP (original)
 CreateToggle("ESPON", "ATIVAR ESP", 0, Pages.ESP, function(v) ESP_ENABLED = v end)
 AddInput("ESPDIST", "DISTÂNCIA ESP:", 35, MAX_ESP_DISTANCE, Pages.ESP, function(v) MAX_ESP_DISTANCE = v end)
 CreateToggle("TEAMCHK", "TEAM CHECK", 85, Pages.ESP, function(v) TEAM_CHECK = v end)
 
--- Aba SAFE (original)
 CreateToggle("STICKY", "STICKY AIM", 0, Pages.Safe, function(v) STICKY_AIM = v end)
 
--- Aba RISK (original)
 CreateToggle("FLYON", "ATIVAR FLY (OLZ)", 0, Pages.Risk, function(v) ToggleFly(v) end)
 AddInput("FLYSPD", "VELOCIDADE FLY:", 35, FLY_SPEED, Pages.Risk, function(v) FLY_SPEED = v end)
 CreateToggle("NOCLIP", "ATIVAR NOCLIP (LUNA)", 80, Pages.Risk, function(v) NOCLIP_ENABLED = v end)
 CreateToggle("INFJUMP", "ATIVAR INF. JUMP", 115, Pages.Risk, function(v) INF_JUMP_ENABLED = v end)
-CreateToggle("SPEEDON", "ATIVAR SPEED HACK", 150, Pages.Risk, function(v)
-    speed.enabled = v
+CreateToggle("SPEEDON", "ATIVAR SPEED HACK", 150, Pages.Risk, function(v) 
+    speed.enabled = v 
     applySpeedBoost(enginePlayer)
 end)
-AddInput("SPEEDVAL", "VELOCIDADE DO SPEED:", 185, speed.speed, Pages.Risk, function(v)
-    speed.speed = v
+AddInput("SPEEDVAL", "VELOCIDADE DO SPEED:", 185, speed.speed, Pages.Risk, function(v) 
+    speed.speed = v 
     if speed.enabled then applySpeedBoost(enginePlayer) end
 end)
 
--- Aba CONFIG (original)
 CreateToggle("STATS", "EXIBIR FPS/PING", 0, Pages.Config, function(v) SHOW_STATS = v; StatsLabel.Visible = v end)
 
 -- ==========================================
 -- SISTEMA DE SAVE/LOAD
 -- ==========================================
 local function UpdatePanelVisuals()
-    local function SetState(btn, state)
-        if btn then
+    local function SetState(btn, state) 
+        if btn then 
             btn.BackgroundColor3 = state and SNOW_WHITE or BTN_COLOR
-            btn.TextColor3 = state and Color3.fromRGB(80,80,80) or SNOW_WHITE
-        end
+            btn.TextColor3 = state and Color3.fromRGB(80,80,80) or SNOW_WHITE 
+        end 
     end
     SetState(UI_Elements.AIMON, AIMBOT_ENABLED); SetState(UI_Elements.VISCHECK, VISIBLE_CHECK)
     SetState(UI_Elements.SHOWFOV, SHOW_FOV_VISUAL); SetState(UI_Elements.ESPON, ESP_ENABLED)
@@ -286,9 +269,7 @@ local function UpdatePanelVisuals()
     SetState(UI_Elements.FLYON, FLY_ENABLED); SetState(UI_Elements.NOCLIP, NOCLIP_ENABLED)
     SetState(UI_Elements.INFJUMP, INF_JUMP_ENABLED); SetState(UI_Elements.STATS, SHOW_STATS)
     SetState(UI_Elements.SPEEDON, speed.enabled)
-    SetState(UI_Elements.AIMRISK_EN, AIM_RISK_ENABLED)
-    SetState(UI_Elements.AIMRISK_FORCE, AIM_RISK_FORCE)
-
+    
     UI_Elements.FOV.Text = tostring(FOV_RADIUS)
     UI_Elements.SMOOTH.Text = tostring(SMOOTHNESS)
     UI_Elements.FLYSPD.Text = tostring(FLY_SPEED)
@@ -297,34 +278,21 @@ local function UpdatePanelVisuals()
 end
 
 local function SaveConfig()
-    local data = {
-        FOV = FOV_RADIUS, SMOOTH = SMOOTHNESS, AIM_ON = AIMBOT_ENABLED, VISIBLE = VISIBLE_CHECK,
-        SHOW_FOV = SHOW_FOV_VISUAL, ESP_ON = ESP_ENABLED, ESP_DIST = MAX_ESP_DISTANCE,
-        STICKY = STICKY_AIM, S_STATS = SHOW_STATS, T_CHECK = TEAM_CHECK,
-        FLY_ON = FLY_ENABLED, FLY_SPD = FLY_SPEED, NOCLIP = NOCLIP_ENABLED,
-        INF_JUMP = INF_JUMP_ENABLED, S_ON = speed.enabled, S_VAL = speed.speed,
-        AIM_RISK_EN = AIM_RISK_ENABLED, AIM_RISK_FORCE = AIM_RISK_FORCE
-    }
+    local data = {FOV = FOV_RADIUS, SMOOTH = SMOOTHNESS, AIM_ON = AIMBOT_ENABLED, VISIBLE = VISIBLE_CHECK, SHOW_FOV = SHOW_FOV_VISUAL, ESP_ON = ESP_ENABLED, ESP_DIST = MAX_ESP_DISTANCE, STICKY = STICKY_AIM, S_STATS = SHOW_STATS, T_CHECK = TEAM_CHECK, FLY_ON = FLY_ENABLED, FLY_SPD = FLY_SPEED, NOCLIP = NOCLIP_ENABLED, INF_JUMP = INF_JUMP_ENABLED, S_ON = speed.enabled, S_VAL = speed.speed}
     writefile("GuNHub_Config.json", HttpService:JSONEncode(data))
 end
 
 local function LoadConfig()
     if isfile("GuNHub_Config.json") then
         local data = HttpService:JSONDecode(readfile("GuNHub_Config.json"))
-        FOV_RADIUS = data.FOV; SMOOTHNESS = data.SMOOTH; AIMBOT_ENABLED = data.AIM_ON; VISIBLE_CHECK = data.VISIBLE
-        SHOW_FOV_VISUAL = data.SHOW_FOV; ESP_ENABLED = data.ESP_ON; MAX_ESP_DISTANCE = data.ESP_DIST
-        STICKY_AIM = data.STICKY; SHOW_STATS = data.S_STATS; TEAM_CHECK = data.T_CHECK
-        FLY_ENABLED = data.FLY_ON; FLY_SPEED = data.FLY_SPD; NOCLIP_ENABLED = data.NOCLIP
-        INF_JUMP_ENABLED = data.INF_JUMP or false
+        FOV_RADIUS = data.FOV; SMOOTHNESS = data.SMOOTH; AIMBOT_ENABLED = data.AIM_ON; VISIBLE_CHECK = data.VISIBLE; SHOW_FOV_VISUAL = data.SHOW_FOV; ESP_ENABLED = data.ESP_ON; MAX_ESP_DISTANCE = data.ESP_DIST; STICKY_AIM = data.STICKY; SHOW_STATS = data.S_STATS; TEAM_CHECK = data.T_CHECK; FLY_ENABLED = data.FLY_ON; FLY_SPEED = data.FLY_SPD; NOCLIP_ENABLED = data.NOCLIP; INF_JUMP_ENABLED = data.INF_JUMP or false
         speed.enabled = data.S_ON or false; speed.speed = data.S_VAL or 16
-        AIM_RISK_ENABLED = data.AIM_RISK_EN or false
-        AIM_RISK_FORCE = data.AIM_RISK_FORCE or false
-
+        
         UpdatePanelVisuals(); ToggleFly(FLY_ENABLED); applySpeedBoost(enginePlayer)
     end
 end
 
--- Botões de salvar/carregar (corrigidos)
+-- BOTÕES DE CONFIG
 local SBtn = Instance.new("TextButton", Pages.Config); SBtn.Size = UDim2.new(0.95, 0, 0, 35); SBtn.Position = UDim2.new(0, 0, 0, 40); SBtn.Text = "SALVAR CONFIG"; SBtn.BackgroundColor3 = SNOW_WHITE; SBtn.BackgroundTransparency = 0.5; SBtn.Font = Enum.Font.GothamBold; Instance.new("UICorner", SBtn); SBtn.MouseButton1Click:Connect(SaveConfig)
 local LBtn = Instance.new("TextButton", Pages.Config); LBtn.Size = UDim2.new(0.95, 0, 0, 35); LBtn.Position = UDim2.new(0, 0, 0, 80); LBtn.Text = "CARREGAR CONFIG"; LBtn.BackgroundColor3 = SNOW_WHITE; LBtn.BackgroundTransparency = 0.5; LBtn.Font = Enum.Font.GothamBold; Instance.new("UICorner", LBtn); LBtn.MouseButton1Click:Connect(LoadConfig)
 
@@ -340,6 +308,7 @@ local function CreateESP(p)
 end
 Players.PlayerAdded:Connect(CreateESP); for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end
 
+-- FIX: REMOVIDA A COLISÃO FORÇADA QUE CAUSAVA AS TRAVADINHAS!
 RunService.Stepped:Connect(function()
     if NOCLIP_ENABLED and LocalPlayer.Character then
         for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
@@ -405,21 +374,19 @@ task.spawn(function()
     end
 end)
 
--- Criação das abas (corrigindo a ordem e posições)
-local function makeTab(name, pos, page)
-    local btn = Instance.new("TextButton", TabFrame)
-    btn.Size = UDim2.new(1, 0, 0, 40)
-    btn.Position = UDim2.new(0, 0, 0, pos)
-    btn.Text = name
-    btn.TextColor3 = SNOW_WHITE
-    btn.BackgroundTransparency = 1
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 12
-    btn.MouseButton1Click:Connect(function()
-        for _, p in pairs(Pages) do p.Visible = false end
-        page.Visible = true
-    end)
+local function TabNav(name, pos, pg)
+    local btn = Instance.new("TextButton", TabFrame); btn.Size = UDim2.new(1, 0, 0, 40); btn.Position = UDim2.new(0, 0, 0, pos); btn.Text = name; btn.TextColor3 = SNOW_WHITE; btn.BackgroundTransparency = 1; btn.Font = Enum.Font.GothamBold; btn.TextSize = 12
+    btn.MouseButton1Click:Connect(function() for _, p in pairs(Pages) do p.Visible = false end; pg.Visible = true end)
 end
+TabNav("AIMBOT", 0, Pages.Aim); TabNav("ESP", 40, Pages.ESP); TabNav("SAFE", 80, Pages.Safe); TabNav("RISK", 120, Pages.Risk); TabNav("CONFIG", 160, Pages.Config)
 
-makeTab("AIMBOT", 0, Pages.Aim)
-makeTab("AIM RISK", 40, Pages.AimR
+local AimBtn = Instance.new("TextButton", ScreenGui); AimBtn.Size = UDim2.new(0, 65, 0, 65); AimBtn.Position = UDim2.new(0.8, 0, 0.5, 0); AimBtn.BackgroundColor3 = SNOW_BLUE; AimBtn.Text = "OFF"; AimBtn.Draggable = true; Instance.new("UICorner", AimBtn).CornerRadius = UDim.new(1,0); AimBtn.MouseButton1Click:Connect(function() isAimingToggle = not isAimingToggle; AimBtn.Text = isAimingToggle and "ON" or "OFF" end)
+
+-- RESET DE FÍSICA AO SPAWNAR
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+    CleanForces()
+end)
+
+-- AUTO-LOAD AO EXECUTAR
+LoadConfig()
